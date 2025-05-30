@@ -1,10 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TodoInput from "./components/TodoInput";
 import TodoList from "./components/TodoList";
 
 function App() {
   const [todos, setTodos] = useState<any>([]);
   const [filter, setFilter] = useState('all');  // 'all' | 'completed' | 'incomplete'
+
+  useEffect(() => {
+    const savedTodos = localStorage.getItem("todos");
+    if(savedTodos){
+      setTodos(JSON.parse(savedTodos));
+    }
+  },[]);
+
+  useEffect(() => {
+    localStorage.setItem("todos", JSON.stringify(todos));
+  },[todos]);
 
   const addTodo = (text: string) => {
     const newTodo = {
