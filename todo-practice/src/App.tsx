@@ -28,7 +28,7 @@ function App() {
 
   const filteredTodos = todos.filter((todo: any) => {
     if(filter === 'completed') return todo.completed;
-    if(filter === 'incompleted') return todo.incompleted;
+    if(filter === 'incomplete') return !todo.completed;
     return true;
   });
 
@@ -50,8 +50,8 @@ function App() {
           완료
         </button>
         <button
-          onClick={() => setFilter('completed')}
-          className={`px-3 py-1 border rounded ${filter === 'incompleted' ? 'bg-blue-500 text-white' : ''}`}
+          onClick={() => setFilter('incomplete')}
+          className={`px-3 py-1 border rounded ${filter === 'incomplete' ? 'bg-blue-500 text-white' : ''}`}
         >
           미완료
         </button>
