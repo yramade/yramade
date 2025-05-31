@@ -1,32 +1,73 @@
+// src/components/TodoInput.tsx
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
-function TodoInput({ addTodo }: any) {
-  const [input, setInput] = useState('');
+type Props = {
+  onAdd: (payload: {
+    text: string;
+    dueDate?: string;
+    priority?: 'high' | 'medium' | 'low';
+  }) => void;
+};
 
-  const handleSubmit = (e: any) => {
+export default function TodoInput({ onAdd }: Props) {
+  const [text, setText] = useState('');
+  const [dueDate, setDueDate] = useState('');
+  const [priority, setPriority] = useState<'high' | 'medium' | 'low'>('medium');
+  const { t } = useTranslation();
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if(!input.trim()) return;
-    addTodo(input);
-    setInput('');
+    if (text.trim() === '') return;
+
+    onAdd({
+      text: text.trim(),
+      dueDate: dueDate || undefined,
+      priority,
+    });
+
+    setText('');
+    setDueDate('');
+    setPriority('medium');
   };
 
-  return(
-    <form onSubmit={handleSubmit} className='flex gap-2 mb-4'>
+  return (
+    <form onSubmit={handleSubmit} className="space-y-2">
       <input
-        type='text'
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        className='flex-1 border rounded px-3 py-2'
-        placeholder='할 일을 입력하세요'
+        type="text"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder={t('placeholder')}
+        className="w-full p-2 border rounded"
       />
-      <button type='submit'
-        className='px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600'
+
+      <label htmlFor="dueDate" className="sr-only">
+        Due Date
+      </label>
+      <input
+        id="dueDate"
+        type="date"
+        value={dueDate}
+        onChange={(e) => setDueDate(e.target.value)}
+        className="w-full p-2 border rounded"
+      />
+
+      <select
+        value={priority}
+        onChange={(e) => setPriority(e.target.value as 'high' | 'medium' | 'low')}
+        className="w-full p-2 border rounded"
       >
-        추가
+        <option value="high">{t('priority.high')}</option>
+        <option value="medium">{t('priority.medium')}</option>
+        <option value="low">{t('priority.low')}</option>
+      </select>
+
+      <button
+        type="submit"
+        className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"
+      >
+        {t('add')}
       </button>
     </form>
-  )
-
+  );
 }
-
-export default TodoInput;
