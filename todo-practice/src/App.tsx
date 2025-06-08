@@ -1,12 +1,12 @@
 import { useReducer, useState } from 'react';
 import TodoInput from './components/TodoInput';
 import TodoList from './components/TodoList';
-import { reducer, initialState } from './hooks/reducer';
+import { useTodo, initialState } from './hooks/useTodo';
 import type { Todo } from './types/todo';
 import { useTranslation } from 'react-i18next';
 
 function App() {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [state, dispatch] = useReducer(useTodo, initialState);
   const [searchText, setSearchText] = useState('');
   const [filterPriority, setFilterPriority] = useState<'all' | 'high' | 'medium' | 'low'>('all');
   const [showCompleted, setShowCompleted] = useState<'all' | 'done' | 'undone'>('all');
@@ -14,7 +14,7 @@ function App() {
   const { t, i18n } = useTranslation();
   const changeLanguage = (lang: 'ko' | 'en') => i18n.changeLanguage(lang);
 
-  const filteredTodos = state.todos.filter((todo) => {
+  const filteredTodos = state.todos.filter((todo: Todo) => {
     const matchesText = todo.text.toLowerCase().includes(searchText.toLowerCase());
     const matchesPriority = filterPriority === 'all' || todo.priority === filterPriority;
     const matchesCompleted =
@@ -69,7 +69,7 @@ function App() {
         </div>
       </div>
 
-      {state.todos.some((t) => t.completed) && (
+      {state.todos.some((t: Todo) => t.completed) && (
         <button
           onClick={() => dispatch({ type: 'CLEAR_COMPLETED' })}
           className="w-full bg-red-500 text-white p-2 rounded hover:bg-red-600 transition"

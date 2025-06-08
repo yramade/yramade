@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { reducer, initialState } from '../hooks/reducer';
+import { useTodo, initialState } from '../hooks/useTodo';
 import type { Todo } from '../types/todo';
 
 describe('reducer', () => {
   it('should add a todo with text, dueDate, and priority', () => {
-    const newState = reducer(initialState, {
+    const newState = useTodo(initialState, {
       type: 'ADD_TODO',
       payload: {
         text: '할 일',
@@ -25,7 +25,7 @@ describe('reducer', () => {
       todos: [{ id: '1', text: '일', completed: false }],
     };
 
-    const newState = reducer(state, {
+    const newState = useTodo(state, {
       type: 'TOGGLE_TODO',
       payload: '1',
     });
@@ -39,7 +39,7 @@ describe('reducer', () => {
       todos: [{ id: '1', text: '일', completed: false }],
     };
 
-    const newState = reducer(state, {
+    const newState = useTodo(state, {
       type: 'DELETE_TODO',
       payload: '1',
     });
@@ -53,7 +53,7 @@ describe('reducer', () => {
       todos: [{ id: '1', text: '기존', completed: false }],
     };
 
-    const newState = reducer(state, {
+    const newState = useTodo(state, {
       type: 'EDIT_TODO',
       payload: { id: '1', text: '수정됨' },
     });
@@ -70,7 +70,7 @@ describe('reducer', () => {
       ],
     };
 
-    const newState = reducer(state, { type: 'CLEAR_COMPLETED' });
+    const newState = useTodo(state, { type: 'CLEAR_COMPLETED' });
 
     expect(newState.todos.length).toBe(1);
     expect(newState.todos[0].text).toBe('미완료');
@@ -85,7 +85,7 @@ describe('reducer', () => {
       ],
     };
 
-    const newState = reducer(state, {
+    const newState = useTodo(state, {
       type: 'REORDER_TODOS',
       payload: [state.todos[1], state.todos[0]],
     });
