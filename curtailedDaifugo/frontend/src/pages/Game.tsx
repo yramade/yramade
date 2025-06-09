@@ -6,6 +6,8 @@ import MyCards from '../components/MyCards';
 import SelectionArea from '../components/SelectionArea';
 
 type Card = { id: string; label: string };
+
+const cardRank = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
 const mockCards = [
   { id: '3♠', label: '3♠' },
   { id: '5♥', label: '5♥' },
@@ -60,13 +62,26 @@ export default function Game() {
       return;
     }
 
+    if (selectedCards.length !== 1) {
+      alert('카드는 한 장만 낼 수 있습니다.');
+      return;
+    }
+
+    const selectedCardObj = myCards.find(card => card.id === selectedCards[0]);
+    if (!selectedCardObj) return;
+
+    if (!isValidPlay(selectedCardObj)) {
+      alert('이 카드는 낼 수 없습니다. 더 높은 카드를 선택하세요.');
+      return;
+    }
+
     const remainingCards = myCards.filter(card => !selectedCards.includes(card.id));
     const playedCards = myCards.filter(card => selectedCards.includes(card.id));
     setMyCards(remainingCards);
     setPlayedUserCards(playedCards); // UI에 표시
-    window.console.log('낸 카드: ', playedCards);
-
     setSelectedCards([]);
+
+    console.log('낸 카드: ', playedCards);
     checkWinCondition();
   };
 
@@ -116,12 +131,30 @@ export default function Game() {
   const checkWinCondition = () => {
     if (myCards.length === 0 && botCards.length === 0) {
       alert('무승부입니다!');
+      endGame();
     } else if (myCards.length === 0) {
       alert(`🎉 ${nickname} 님이 이겼습니다! 축하드립니다!`);
+      endGame();
     } else if (botCards.length === 0) {
       alert('😢 컴퓨터가 이겼습니다. 다음엔 꼭 이겨봐요!');
+      endGame();
     }
-    endGame();
+  };
+
+  const getCardValue = (cardId: string) => {
+    const value = cardId.slice(0, -1); // '7♣' → '7'
+    return cardRank.indexOf(value);
+  };
+
+  const isValidPlay = (card: Card): boolean => {
+    // 검증 함수
+    if (!playedBotCard && playedUserCards.length === 0) return true; // 첫 턴
+
+    const lastPlayed = playedBotCard?.id || playedUserCards[playedUserCards.length - 1]?.id;
+
+    if (!lastPlayed) return true;
+
+    return getCardValue(card.id) > getCardValue(lastPlayed);
   };
 
   return (
@@ -161,7 +194,9 @@ export default function Game() {
       {playedBotCard && (
         <div className="mt-4">
           <h3 className="font-semibold">컴퓨터가 낸 카드</h3>
-          <div className="rounded border bg-white px-2 py-1 shadow">{playedBotCard.label}</div>
+          <div className="flex gap-2">
+            <div className="rounded border bg-white px-2 py-1 shadow">{playedBotCard.label}</div>
+          </div>
         </div>
       )}
     </div>
