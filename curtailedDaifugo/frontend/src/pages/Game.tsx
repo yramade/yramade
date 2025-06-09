@@ -5,28 +5,36 @@ import ActionButtons from '../components/ActionButtons';
 import MyCards from '../components/MyCards';
 import SelectionArea from '../components/SelectionArea';
 
+const mockCards = [
+  { id: '3♠', label: '3♠' },
+  { id: '5♥', label: '5♥' },
+  { id: '7♣', label: '7♣' },
+  { id: 'J♦', label: 'J♦' },
+  { id: 'Q♠', label: 'Q♠' },
+  { id: '2♣', label: '2♣' },
+  { id: 'A♥', label: 'A♥' },
+];
+
 export default function Game() {
   const [nickname, setNickname] = useState('');
   const navigate = useNavigate();
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
-  const mockCards = [
-    { id: '3♠', label: '3♠' },
-    { id: '5♥', label: '5♥' },
-    { id: '7♣', label: '7♣' },
-    { id: 'J♦', label: 'J♦' },
-    { id: 'Q♠', label: 'Q♠' },
-    { id: '2♣', label: '2♣' },
-    { id: 'A♥', label: 'A♥' },
-  ];
+  const [turn, setTurn] = useState<'user' | 'bot'>('user');
+  const [myCards, setMyCards] = useState(mockCards);
+  const [isBotThinking, setIsBotThinking] = useState(false);
 
   useEffect(() => {
     const storedName = localStorage.getItem('nickname');
     if (!storedName) {
       navigate('/');
+    } else if (storedName === nickname) {
+      return;
     } else {
       setNickname(storedName);
     }
-  }, [navigate]);
+  }, [navigate, nickname]);
+
+  if (!nickname) return null; // 또는 <LoadingSpinner />
 
   const toggleSelectCard = (cardId: string) => {
     setSelectedCards(prev => (prev.includes(cardId) ? prev.filter(id => id !== cardId) : [...prev, cardId]));
@@ -42,17 +50,40 @@ export default function Game() {
     // TODO: 서버에 전송 or 상태 갱신 등
   };
 
+  const handleEndTurn = () => {
+    if (turn === 'user') {
+      setTurn('bot');
+
+      setTimeout(() => {
+        runBotTurn();
+        setTurn('user');
+      }, 1000);
+    }
+  };
+
+  const runBotTurn = () => {
+    console.log('봇의 턴입니다!');
+    // 여기에 봇 로직 추가할 예정
+    // ex. isBotThinking 상태 추가해서 메시지 표시
+  };
+
   return (
     <div className="flex min-h-screen flex-col items-center bg-green-100 p-8">
-      <h2 className="mb-4 text-2xl font-bold">{nickname} 님의 턴입니다.</h2>
+      <h2 className="mb-4 text-2xl font-bold">
+        {turn === 'user' ? `${nickname} 님의 턴입니다.` : '컴퓨터의 턴입니다.'}
+      </h2>
 
       <MyCards
-        cards={mockCards}
+        cards={myCards}
         selected={selectedCards}
         onToggle={toggleSelectCard}
       />
       <SelectionArea selected={selectedCards} />
-      <ActionButtons onPlay={handlePlayCards} />
+      <ActionButtons
+        disabled={turn !== 'user'}
+        onEndTurn={handleEndTurn}
+        onPlay={handlePlayCards}
+      />
     </div>
   );
 }
