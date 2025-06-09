@@ -41,7 +41,7 @@ export default function Game() {
         selected={selectCards}
         onToggle={toggleSelectCard}
       />
-      <SelectionArea />
+      <SelectionArea selected={selectCards} />
       <ActionButtons />
     </div>
   );
