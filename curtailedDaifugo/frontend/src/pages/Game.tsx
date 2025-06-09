@@ -5,6 +5,7 @@ import ActionButtons from '../components/ActionButtons';
 import MyCards from '../components/MyCards';
 import SelectionArea from '../components/SelectionArea';
 
+type Card = { id: string; label: string };
 const mockCards = [
   { id: '3♠', label: '3♠' },
   { id: '5♥', label: '5♥' },
@@ -32,7 +33,8 @@ export default function Game() {
   const [myCards, setMyCards] = useState(mockCards);
   const [botCards, setBotCards] = useState(botMockCards);
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
-  const [selectedBotCards, setSeletedBotCards] = useState<string[] | null>(null);
+  const [playedUserCards, setPlayedUserCards] = useState<Card[]>([]);
+  const [playedBotCard, setPlayedBotCard] = useState<Card | null>(null);
   const [isBotThinking, setIsBotThinking] = useState(false);
 
   useEffect(() => {
@@ -59,8 +61,10 @@ export default function Game() {
     }
 
     const remainingCards = myCards.filter(card => !selectedCards.includes(card.id));
+    const playedCards = myCards.filter(card => selectedCards.includes(card.id));
     setMyCards(remainingCards);
-    window.console.log('낸 카드: ', selectedCards);
+    setPlayedUserCards(playedCards); // UI에 표시
+    window.console.log('낸 카드: ', playedCards);
 
     setSelectedCards([]);
   };
@@ -72,6 +76,10 @@ export default function Game() {
       setTimeout(() => {
         runBotTurn();
         setTurn('user');
+
+        // 봇 턴 끝난 후에 상태 초기화
+        setPlayedUserCards([]);
+        setPlayedBotCard(null);
       }, 1000);
     }
   };
@@ -88,11 +96,12 @@ export default function Game() {
       }
 
       const randomIndex = Math.floor(Math.random() * botCards.length);
-      const selectedCards = botCards[randomIndex];
+      const selectedCard = botCards[randomIndex];
 
-      console.log('컴퓨터가 낸 카드: ', selectedCards);
+      console.log('컴퓨터가 낸 카드: ', selectedCard);
       const remaining = botCards.filter((_, idx) => idx !== randomIndex);
       setBotCards(remaining);
+      setPlayedBotCard(selectedCard); // UI에 표시
 
       setIsBotThinking(false);
     }, 1000);
@@ -111,12 +120,33 @@ export default function Game() {
         onToggle={toggleSelectCard}
       />
       <SelectionArea selected={selectedCards} />
-      <p>컴퓨터가 낸 카드: {selectedBotCards}</p>
       <ActionButtons
         disabled={turn !== 'user'}
         onEndTurn={handleEndTurn}
         onPlay={handlePlayCards}
       />
+
+      {playedUserCards.length > 0 && (
+        <div className="mt-4">
+          <h3 className="font-semibold">당신이 낸 카드</h3>
+          <div className="flex gap-2">
+            {playedUserCards.map(card => (
+              <div
+                key={card.id}
+                className="rounded border bg-white px-2 py-1 shadow">
+                {card.label}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {playedBotCard && (
+        <div className="mt-4">
+          <h3 className="font-semibold">컴퓨터가 낸 카드</h3>
+          <div className="rounded border bg-white px-2 py-1 shadow">{playedBotCard.label}</div>
+        </div>
+      )}
     </div>
   );
 }
