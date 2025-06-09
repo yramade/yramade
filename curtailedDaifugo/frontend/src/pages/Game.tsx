@@ -67,6 +67,7 @@ export default function Game() {
     window.console.log('낸 카드: ', playedCards);
 
     setSelectedCards([]);
+    checkWinCondition();
   };
 
   const handleEndTurn = () => {
@@ -104,7 +105,23 @@ export default function Game() {
       setPlayedBotCard(selectedCard); // UI에 표시
 
       setIsBotThinking(false);
+      checkWinCondition();
     }, 1000);
+  };
+
+  const endGame = () => {
+    navigate('/result');
+  };
+
+  const checkWinCondition = () => {
+    if (myCards.length === 0 && botCards.length === 0) {
+      alert('무승부입니다!');
+    } else if (myCards.length === 0) {
+      alert(`🎉 ${nickname} 님이 이겼습니다! 축하드립니다!`);
+    } else if (botCards.length === 0) {
+      alert('😢 컴퓨터가 이겼습니다. 다음엔 꼭 이겨봐요!');
+    }
+    endGame();
   };
 
   return (
