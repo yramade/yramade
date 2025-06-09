@@ -15,12 +15,24 @@ const mockCards = [
   { id: 'A♥', label: 'A♥' },
 ];
 
+const botMockCards = [
+  { id: '4♠', label: '4♠' },
+  { id: '6♦', label: '6♦' },
+  { id: '9♣', label: '9♣' },
+  { id: '7♦', label: '7♦' },
+  { id: '10♥', label: '10♥' },
+  { id: 'Q♥', label: 'Q♥' },
+  { id: 'K♠', label: 'K♠' },
+];
+
 export default function Game() {
   const [nickname, setNickname] = useState('');
   const navigate = useNavigate();
-  const [selectedCards, setSelectedCards] = useState<string[]>([]);
   const [turn, setTurn] = useState<'user' | 'bot'>('user');
   const [myCards, setMyCards] = useState(mockCards);
+  const [botCards, setBotCards] = useState(botMockCards);
+  const [selectedCards, setSelectedCards] = useState<string[]>([]);
+  const [selectedBotCards, setSeletedBotCards] = useState<string[] | null>(null);
   const [isBotThinking, setIsBotThinking] = useState(false);
 
   useEffect(() => {
@@ -46,8 +58,11 @@ export default function Game() {
       return;
     }
 
-    window.console.log('선택된 카드: ', selectedCards);
-    // TODO: 서버에 전송 or 상태 갱신 등
+    const remainingCards = myCards.filter(card => !selectedCards.includes(card.id));
+    setMyCards(remainingCards);
+    window.console.log('낸 카드: ', selectedCards);
+
+    setSelectedCards([]);
   };
 
   const handleEndTurn = () => {
@@ -62,9 +77,25 @@ export default function Game() {
   };
 
   const runBotTurn = () => {
-    console.log('봇의 턴입니다!');
-    // 여기에 봇 로직 추가할 예정
-    // ex. isBotThinking 상태 추가해서 메시지 표시
+    console.log('컴퓨터의 턴입니다!');
+    setIsBotThinking(true);
+
+    setTimeout(() => {
+      if (botCards.length === 0) {
+        console.log('컴퓨터가 낼 카드가 없습니다.');
+        setIsBotThinking(false);
+        return;
+      }
+
+      const randomIndex = Math.floor(Math.random() * botCards.length);
+      const selectedCards = botCards[randomIndex];
+
+      console.log('컴퓨터가 낸 카드: ', selectedCards);
+      const remaining = botCards.filter((_, idx) => idx !== randomIndex);
+      setBotCards(remaining);
+
+      setIsBotThinking(false);
+    }, 1000);
   };
 
   return (
@@ -73,12 +104,14 @@ export default function Game() {
         {turn === 'user' ? `${nickname} 님의 턴입니다.` : '컴퓨터의 턴입니다.'}
       </h2>
 
+      {isBotThinking && <p className="mt-4 text-gray-600">컴퓨터가 카드를 고르는 중...</p>}
       <MyCards
         cards={myCards}
         selected={selectedCards}
         onToggle={toggleSelectCard}
       />
       <SelectionArea selected={selectedCards} />
+      <p>컴퓨터가 낸 카드: {selectedBotCards}</p>
       <ActionButtons
         disabled={turn !== 'user'}
         onEndTurn={handleEndTurn}
