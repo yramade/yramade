@@ -1,43 +1,36 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { CardRankMap, MockCards, BotMockCards } from '../constants/game';
+
 import ActionButtons from '../components/ActionButtons';
 import MyCards from '../components/MyCards';
 import SelectionArea from '../components/SelectionArea';
+import TurnHistory from '../components/TurnHistory';
+import RulePanel from '../components/RulesPanel';
 
-type Card = { id: string; label: string };
-
-const cardRank = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
-const mockCards = [
-  { id: '3♠', label: '3♠' },
-  { id: '5♥', label: '5♥' },
-  { id: '7♣', label: '7♣' },
-  { id: 'J♦', label: 'J♦' },
-  { id: 'Q♠', label: 'Q♠' },
-  { id: '2♣', label: '2♣' },
-  { id: 'A♥', label: 'A♥' },
-];
-
-const botMockCards = [
-  { id: '4♠', label: '4♠' },
-  { id: '6♦', label: '6♦' },
-  { id: '9♣', label: '9♣' },
-  { id: '7♦', label: '7♦' },
-  { id: '10♥', label: '10♥' },
-  { id: 'Q♥', label: 'Q♥' },
-  { id: 'K♠', label: 'K♠' },
-];
+export type Card = { id: string; label: string };
+type TurnRecord = {
+  turn: number;
+  player: 'user' | 'bot';
+  card: Card;
+};
 
 export default function Game() {
   const [nickname, setNickname] = useState('');
   const navigate = useNavigate();
   const [turn, setTurn] = useState<'user' | 'bot'>('user');
-  const [myCards, setMyCards] = useState(mockCards);
-  const [botCards, setBotCards] = useState(botMockCards);
-  const [selectedCards, setSelectedCards] = useState<string[]>([]);
+  const [myCards, setMyCards] = useState(MockCards);
+  const [botCards, setBotCards] = useState(BotMockCards);
   const [playedUserCards, setPlayedUserCards] = useState<Card[]>([]);
   const [playedBotCard, setPlayedBotCard] = useState<Card | null>(null);
+  const [selectedCards, setSelectedCards] = useState<string[]>([]);
   const [isBotThinking, setIsBotThinking] = useState(false);
+  const [turnHistory, setTurnHistory] = useState<TurnRecord[]>([]);
+  const [turnCount, setTurnCount] = useState(1);
+  const [showRules, setShowRules] = useState(false);
+  const [message, setMessage] = useState('');
+  const [canEndTurn, setCanEndTurn] = useState(false);
 
   useEffect(() => {
     const storedName = localStorage.getItem('nickname');
@@ -52,50 +45,60 @@ export default function Game() {
 
   if (!nickname) return null; // 또는 <LoadingSpinner />
 
+  const resetTurnState = () => {
+    // 봇 턴 끝난 후에 상태 초기화
+    setPlayedUserCards([]);
+    setPlayedBotCard(null);
+    setCanEndTurn(false);
+  };
+
   const toggleSelectCard = (cardId: string) => {
     setSelectedCards(prev => (prev.includes(cardId) ? prev.filter(id => id !== cardId) : [...prev, cardId]));
   };
 
   const handlePlayCards = () => {
     if (selectedCards.length === 0) {
-      alert('카드를 선택하세요!');
+      setMessage('카드를 선택하세요!');
       return;
     }
 
     if (selectedCards.length !== 1) {
-      alert('카드는 한 장만 낼 수 있습니다.');
+      setMessage('카드는 한 장만 낼 수 있습니다.');
       return;
     }
 
+    console.log('고른 카드: ', myCards);
     const selectedCardObj = myCards.find(card => card.id === selectedCards[0]);
     if (!selectedCardObj) return;
 
     if (!isValidPlay(selectedCardObj)) {
-      alert('이 카드는 낼 수 없습니다. 더 높은 카드를 선택하세요.');
+      setMessage('이 카드는 낼 수 없습니다. 더 높은 카드를 선택하세요.');
       return;
     }
 
     const remainingCards = myCards.filter(card => !selectedCards.includes(card.id));
     const playedCards = myCards.filter(card => selectedCards.includes(card.id));
+    setMessage('');
+    setCanEndTurn(true);
     setMyCards(remainingCards);
     setPlayedUserCards(playedCards); // UI에 표시
     setSelectedCards([]);
+    setTurnHistory(prev => [...prev, { turn: turnCount, player: 'user', card: selectedCardObj }]);
 
     console.log('낸 카드: ', playedCards);
     checkWinCondition();
   };
 
   const handleEndTurn = () => {
+    setMessage('');
+
     if (turn === 'user') {
       setTurn('bot');
 
       setTimeout(() => {
         runBotTurn();
         setTurn('user');
-
-        // 봇 턴 끝난 후에 상태 초기화
-        setPlayedUserCards([]);
-        setPlayedBotCard(null);
+        resetTurnState();
       }, 1000);
     }
   };
@@ -118,32 +121,34 @@ export default function Game() {
       const remaining = botCards.filter((_, idx) => idx !== randomIndex);
       setBotCards(remaining);
       setPlayedBotCard(selectedCard); // UI에 표시
+      setTurnHistory(prev => [...prev, { turn: turnCount, player: 'bot', card: selectedCard }]);
+      setTurnCount(prev => prev + 1);
 
       setIsBotThinking(false);
       checkWinCondition();
     }, 1000);
   };
 
-  const endGame = () => {
-    navigate('/result');
+  const endGame = (result: 'win' | 'lose' | 'draw') => {
+    navigate('/result', { state: { result } });
   };
 
   const checkWinCondition = () => {
     if (myCards.length === 0 && botCards.length === 0) {
-      alert('무승부입니다!');
-      endGame();
+      setMessage('무승부입니다!');
+      endGame('draw');
     } else if (myCards.length === 0) {
-      alert(`🎉 ${nickname} 님이 이겼습니다! 축하드립니다!`);
-      endGame();
+      setMessage(`🎉 ${nickname} 님이 이겼습니다! 축하드립니다!`);
+      endGame('win');
     } else if (botCards.length === 0) {
-      alert('😢 컴퓨터가 이겼습니다. 다음엔 꼭 이겨봐요!');
-      endGame();
+      setMessage('😢 컴퓨터가 이겼습니다. 다음엔 꼭 이겨봐요!');
+      endGame('lose');
     }
   };
 
   const getCardValue = (cardId: string) => {
     const value = cardId.slice(0, -1); // '7♣' → '7'
-    return cardRank.indexOf(value);
+    return CardRankMap.get(value) ?? -1; // 더 빠르고 안정적이며, 존재하지 않는 값(-1)도 안전하게 처리
   };
 
   const isValidPlay = (card: Card): boolean => {
@@ -157,12 +162,32 @@ export default function Game() {
     return getCardValue(card.id) > getCardValue(lastPlayed);
   };
 
+  const groupedHistory = turnHistory.reduce(
+    (acc, record) => {
+      const existing = acc.find(group => group.turn === record.turn);
+      if (existing) {
+        existing[record.player] = record.card;
+      } else {
+        acc.push({ turn: record.turn, [record.player]: record.card });
+      }
+      return acc;
+    },
+    [] as { turn: number; user?: Card; bot?: Card }[],
+  );
+
   return (
     <div className="flex min-h-screen flex-col items-center bg-green-100 p-8">
       <h2 className="mb-4 text-2xl font-bold">
         {turn === 'user' ? `${nickname} 님의 턴입니다.` : '컴퓨터의 턴입니다.'}
       </h2>
 
+      <button
+        onClick={() => setShowRules(prev => !prev)}
+        className="mb-4 rounded bg-yellow-400 px-3 py-1 text-sm text-white hover:bg-yellow-500">
+        {showRules ? '룰 숨기기' : '룰 보기'}
+      </button>
+
+      {showRules && <RulePanel />}
       {isBotThinking && <p className="mt-4 text-gray-600">컴퓨터가 카드를 고르는 중...</p>}
       <MyCards
         cards={myCards}
@@ -171,10 +196,13 @@ export default function Game() {
       />
       <SelectionArea selected={selectedCards} />
       <ActionButtons
-        disabled={turn !== 'user'}
+        disablePlay={turn !== 'user'}
+        disableEndTurn={turn !== 'user' || !canEndTurn}
         onEndTurn={handleEndTurn}
         onPlay={handlePlayCards}
       />
+
+      {message && <div className="mb-4 rounded bg-red-100 px-4 py-2 text-sm text-red-700 shadow">{message}</div>}
 
       {playedUserCards.length > 0 && (
         <div className="mt-4">
@@ -199,6 +227,8 @@ export default function Game() {
           </div>
         </div>
       )}
+
+      <TurnHistory groupedHistory={groupedHistory} />
     </div>
   );
 }
