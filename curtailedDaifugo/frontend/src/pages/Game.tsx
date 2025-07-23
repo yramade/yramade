@@ -82,7 +82,6 @@ export default function Game() {
       return;
     }
 
-    console.log('고른 카드: ', myCards);
     const selectedCardObj = myCards.find(card => card.id === selectedCards[0]);
     if (!selectedCardObj) return;
 
@@ -91,18 +90,27 @@ export default function Game() {
       return;
     }
 
-    setMessage(''); // 메세지 초기화
-
     const remainingCards = myCards.filter(card => !selectedCards.includes(card.id));
     const playedCards = myCards.filter(card => selectedCards.includes(card.id));
-    setCanEndTurn(true);
     setMyCards(remainingCards);
     setPlayedUserCards(playedCards); // UI에 표시
     setSelectedCards([]);
+    setCanEndTurn(true);
     setTurnHistory(prev => [...prev, { turn: turnCount, player: 'user', card: selectedCardObj }]);
-
-    console.log('낸 카드: ', playedCards);
     checkWinCondition();
+    console.log('낸 카드: ', playedCards);
+
+    // 갱신된 카드(remainingCards)를 기준으로 validMove 판단
+    const hasLargerCard = remainingCards.some(card => isValidPlay(card));
+    if (!hasLargerCard) {
+      setMessage('낼 수 있는 카드가 없어서 자동으로 턴을 넘깁니다.');
+      setTimeout(() => {
+        handleEndTurn();
+        setMessage('');
+      });
+    } else {
+      setMessage(''); // 아직 메세지가 남을 경우에 초기화
+    }
   };
 
   const handleEndTurn = () => {
@@ -177,16 +185,18 @@ export default function Game() {
   };
 
   const groupedHistory = turnHistory.reduce(
-    (acc, record) => {
-      const existing = acc.find(group => group.turn === record.turn);
-      if (existing) {
-        existing[record.player] = record.card;
-      } else {
-        acc.push({ turn: record.turn, [record.player]: record.card });
+    (acc, curr) => {
+      const last = acc.at(-1);
+      if (!last || last.turn !== curr.turn) {
+        acc.push({ turn: curr.turn, user: null, bot: null });
       }
+
+      if (curr.player === 'user') acc.at(-1)!.user = curr.card;
+      else acc.at(-1)!.bot = curr.card;
+
       return acc;
     },
-    [] as { turn: number; user?: Card; bot?: Card }[],
+    [] as { turn: number; user: Card | null; bot: Card | null }[],
   );
 
   return (
@@ -242,7 +252,7 @@ export default function Game() {
         </div>
       )}
 
-      <TurnHistory groupedHistory={groupedHistory} />
+      {groupedHistory.length > 0 && <TurnHistory groupedHistory={groupedHistory} />}
     </div>
   );
 }
