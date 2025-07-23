@@ -10,10 +10,10 @@ import TurnHistory from '../components/TurnHistory';
 import RulePanel from '../components/RulesPanel';
 
 export type Card = { id: string; label: string };
-type TurnRecord = {
+export type TurnRecordGroup = {
   turn: number;
-  player: 'user' | 'bot';
-  card: Card;
+  user?: Card;
+  bot?: Card;
 };
 
 export default function Game() {
@@ -26,7 +26,7 @@ export default function Game() {
   const [playedBotCard, setPlayedBotCard] = useState<Card | null>(null);
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
   const [isBotThinking, setIsBotThinking] = useState(false);
-  const [turnHistory, setTurnHistory] = useState<TurnRecord[]>([]);
+  const [turnHistory, setTurnHistory] = useState<TurnRecordGroup[]>([]);
   const [turnCount, setTurnCount] = useState(1);
   const [showRules, setShowRules] = useState(false);
   const [message, setMessage] = useState('');
@@ -96,7 +96,15 @@ export default function Game() {
     setPlayedUserCards(playedCards); // UI에 표시
     setSelectedCards([]);
     setCanEndTurn(true);
-    setTurnHistory(prev => [...prev, { turn: turnCount, player: 'user', card: selectedCardObj }]);
+    // setTurnHistory(prev => [...prev, { turn: turnCount, player: 'user', card: selectedCardObj }]);
+    setTurnHistory(prev => {
+      const existing = prev.find(t => t.turn === turnCount);
+      if (existing) {
+        return prev.map(t => (t.turn === turnCount ? { ...t, user: selectedCardObj } : t));
+      } else {
+        return [...prev, { turn: turnCount, user: selectedCardObj }];
+      }
+    });
     checkWinCondition();
     console.log('낸 카드: ', playedCards);
 
@@ -145,7 +153,15 @@ export default function Game() {
       const remaining = botCards.filter((_, idx) => idx !== randomIndex);
       setBotCards(remaining);
       setPlayedBotCard(selectedCard); // UI에 표시
-      setTurnHistory(prev => [...prev, { turn: turnCount, player: 'bot', card: selectedCard }]);
+      // setTurnHistory(prev => [...prev, { turn: turnCount, player: 'bot', card: selectedCard }]);
+      setTurnHistory(prev => {
+        const existing = prev.find(t => t.turn === turnCount);
+        if (existing) {
+          return prev.map(t => (t.turn === turnCount ? { ...t, bot: selectedCard } : t));
+        } else {
+          return [...prev, { turn: turnCount, bot: selectedCard }];
+        }
+      });
       setTurnCount(prev => prev + 1);
 
       setIsBotThinking(false);
@@ -154,7 +170,10 @@ export default function Game() {
   };
 
   const endGame = (result: 'win' | 'lose' | 'draw') => {
-    navigate('/result', { state: { result } });
+    //navigate('/result', { state: { result } });
+    navigate('/result', {
+      state: { result: result, turnHistory },
+    });
   };
 
   const checkWinCondition = () => {
@@ -183,21 +202,6 @@ export default function Game() {
     if (!lastPlayed) return true;
     return getCardValue(card.id) > getCardValue(lastPlayed);
   };
-
-  const groupedHistory = turnHistory.reduce(
-    (acc, curr) => {
-      const last = acc.at(-1);
-      if (!last || last.turn !== curr.turn) {
-        acc.push({ turn: curr.turn, user: null, bot: null });
-      }
-
-      if (curr.player === 'user') acc.at(-1)!.user = curr.card;
-      else acc.at(-1)!.bot = curr.card;
-
-      return acc;
-    },
-    [] as { turn: number; user: Card | null; bot: Card | null }[],
-  );
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-green-100 p-8">
@@ -252,7 +256,7 @@ export default function Game() {
         </div>
       )}
 
-      {groupedHistory.length > 0 && <TurnHistory groupedHistory={groupedHistory} />}
+      {turnHistory.length > 0 && <TurnHistory groupedHistory={turnHistory} />}
     </div>
   );
 }
