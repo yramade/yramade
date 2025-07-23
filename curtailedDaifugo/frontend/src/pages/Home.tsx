@@ -13,12 +13,19 @@ export default function Home() {
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleStart();
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100">
       <h1 className="fond-bold mb-8 text-3xl">단축 대부호</h1>
       <input
         type="text"
         value={nickname}
+        onKeyDown={handleKeyDown}
         onChange={e => setNickname(e.target.value)}
         placeholder="닉네임을 입력하세요"
         className="mb-4 w-64 rounded-md border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
