@@ -43,6 +43,21 @@ export default function Game() {
     }
   }, [navigate, nickname]);
 
+  const hasValidMove = (): boolean => {
+    if (!playedBotCard) return true; // 첫 턴에는 낼 수 있음
+    return myCards.some(card => getCardValue(card.id) > getCardValue(playedBotCard.id));
+  };
+
+  useEffect(() => {
+    if (turn === 'user') {
+      const canPlay = hasValidMove();
+      if (!canPlay) {
+        setMessage('낼 수 있는 카드가 없습니다. 턴을 넘기세요.');
+        setCanEndTurn(true); // 턴 넘기기만 허용
+      }
+    }
+  }, [turn, myCards, playedBotCard]);
+
   if (!nickname) return null; // 또는 <LoadingSpinner />
 
   const resetTurnState = () => {
@@ -76,9 +91,10 @@ export default function Game() {
       return;
     }
 
+    setMessage(''); // 메세지 초기화
+
     const remainingCards = myCards.filter(card => !selectedCards.includes(card.id));
     const playedCards = myCards.filter(card => selectedCards.includes(card.id));
-    setMessage('');
     setCanEndTurn(true);
     setMyCards(remainingCards);
     setPlayedUserCards(playedCards); // UI에 표시
@@ -154,11 +170,9 @@ export default function Game() {
   const isValidPlay = (card: Card): boolean => {
     // 검증 함수
     if (!playedBotCard && playedUserCards.length === 0) return true; // 첫 턴
-
     const lastPlayed = playedBotCard?.id || playedUserCards[playedUserCards.length - 1]?.id;
 
     if (!lastPlayed) return true;
-
     return getCardValue(card.id) > getCardValue(lastPlayed);
   };
 
