@@ -1,0 +1,196 @@
+# Create the OpenAPI YAML with Korean descriptions and prepare it for download
+openapi_yaml = """
+openapi: 3.0.0
+info:
+  title: 초이스 포커 API
+  version: 1.0.0
+  description: 싱글플레이 카드 게임 '초이스 포커'의 API 명세입니다.
+servers:
+  - url: https://api.choicepoker.dev
+paths:
+  /game/start:
+    post:
+      summary: 새로운 게임 세션 시작
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                playerName:
+                  type: string
+      responses:
+        '200':
+          description: 게임이 성공적으로 시작됨
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  gameId:
+                    type: string
+                  playerCards:
+                    type: array
+                    items:
+                      type: string
+                  aiCardsCount:
+                    type: integer
+
+  /game/{gameId}/exchange:
+    post:
+      summary: 선택한 카드를 교환
+      parameters:
+        - in: path
+          name: gameId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                indicesToExchange:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        '200':
+          description: 카드 교환 완료
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  newPlayerCards:
+                    type: array
+                    items:
+                      type: string
+                  aiExchanged:
+                    type: boolean
+
+  /game/{gameId}/roll-dice:
+    post:
+      summary: 주사위를 던져 초이스 결정권을 정함
+      parameters:
+        - in: path
+          name: gameId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 주사위 던지기 결과
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  playerRoll:
+                    type: integer
+                  aiRoll:
+                    type: integer
+                  winner:
+                    type: string
+                    enum: [player, ai, tie]
+                  retry:
+                    type: boolean
+
+  /game/{gameId}/select-choice:
+    post:
+      summary: 초이스(강한 순서 / 약한 순서)를 선택
+      parameters:
+        - in: path
+          name: gameId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                order:
+                  type: string
+                  enum: [strong, weak]
+      responses:
+        '200':
+          description: 초이스 선택 완료
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderConfirmed:
+                    type: boolean
+
+  /game/{gameId}/showdown:
+    get:
+      summary: 양쪽 패를 공개하고 승자를 결정
+      parameters:
+        - in: path
+          name: gameId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 쇼다운 결과
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  playerHand:
+                    type: array
+                    items:
+                      type: string
+                  aiHand:
+                    type: array
+                    items:
+                      type: string
+                  handRanking:
+                    type: object
+                    properties:
+                      player:
+                        type: string
+                      ai:
+                        type: string
+                  choice:
+                    type: string
+                    enum: [strong, weak]
+                  winner:
+                    type: string
+                    enum: [player, ai, draw]
+
+  /game/{gameId}/restart:
+    post:
+      summary: 동일 세션에서 새로운 라운드 시작
+      parameters:
+        - in: path
+          name: gameId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 게임 재시작 완료
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  gameId:
+                    type: string
+                  playerCards:
+                    type: array
+                    items:
+                      type: string
+                  aiCardsCount:
+                    type: integer
+"""
