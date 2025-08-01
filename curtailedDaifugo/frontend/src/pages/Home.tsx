@@ -1,8 +1,8 @@
-import { use, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Home() {
-  const [nickname, setNickname] = useState('');
+  const [nickname, setNickname] = useState('아라');
   const navigate = useNavigate();
 
   const handleStart = () => {

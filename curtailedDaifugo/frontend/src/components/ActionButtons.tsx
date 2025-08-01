@@ -1,8 +1,8 @@
 interface Props {
   disablePlay: boolean;
-  disableEndTurn: boolean;
+  disableEndTurn?: boolean;
   onPlay: () => void;
-  onEndTurn: () => void;
+  onEndTurn?: () => void;
 }
 
 export default function ActionButtons({ onPlay, onEndTurn, disablePlay, disableEndTurn }: Props) {
@@ -15,12 +15,12 @@ export default function ActionButtons({ onPlay, onEndTurn, disablePlay, disableE
         카드 내기
       </button>
 
-      <button
+      {/* <button
         onClick={onEndTurn}
         disabled={disableEndTurn}
         className="rounded bg-gray-400 px-4 py-2 text-white hover:bg-gray-500">
         턴 넘기기
-      </button>
+      </button> */}
     </div>
   );
 }

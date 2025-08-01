@@ -1,36 +1,174 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { CardRankMap, MockCards, BotMockCards } from '../constants/game';
+import { CardRankMap, ShuffleCards } from '../constants/game';
 
-import ActionButtons from '../components/ActionButtons';
 import MyCards from '../components/MyCards';
-import SelectionArea from '../components/SelectionArea';
-import TurnHistory from '../components/TurnHistory';
 import RulePanel from '../components/RulesPanel';
+import TurnHistory from '../components/TurnHistory';
+import ActionButtons from '../components/ActionButtons';
+import SelectionArea from '../components/SelectionArea';
 
 export type Card = { id: string; label: string };
 export type TurnRecordGroup = {
   turn: number;
-  user?: Card;
-  bot?: Card;
+  user?: Card | null;
+  bot?: Card | null;
 };
 
 export default function Game() {
-  const [nickname, setNickname] = useState('');
   const navigate = useNavigate();
-  const [turn, setTurn] = useState<'user' | 'bot'>('user');
-  const [myCards, setMyCards] = useState(MockCards);
-  const [botCards, setBotCards] = useState(BotMockCards);
-  const [playedUserCards, setPlayedUserCards] = useState<Card[]>([]);
-  const [playedBotCard, setPlayedBotCard] = useState<Card | null>(null);
-  const [selectedCards, setSelectedCards] = useState<string[]>([]);
-  const [isBotThinking, setIsBotThinking] = useState(false);
-  const [turnHistory, setTurnHistory] = useState<TurnRecordGroup[]>([]);
+  const [message, setMessage] = useState('');
+  const [nickname, setNickname] = useState('');
   const [turnCount, setTurnCount] = useState(1);
   const [showRules, setShowRules] = useState(false);
-  const [message, setMessage] = useState('');
-  const [canEndTurn, setCanEndTurn] = useState(false);
+  const [botHands, setBotHands] = useState<Card[]>([]);
+  const [userHands, setUserHands] = useState<Card[]>([]);
+  const [turn, setTurn] = useState<'user' | 'bot'>('user');
+  const [isBotThinking, setIsBotThinking] = useState(false);
+  const [selectingCard, setSelectingCard] = useState<string>('');
+  const [turnHistory, setTurnHistory] = useState<TurnRecordGroup[]>([]);
+  const [botSelectedCard, setBotSelectedCard] = useState<Card | null>();
+  const [userSelectedCard, setUserSelectedCard] = useState<Card | null>();
+
+  const toggleSelectCard = (cardId: string) => {
+    setSelectingCard(prev => (prev.length > 0 && prev !== cardId ? cardId : prev === cardId ? '' : cardId));
+  };
+
+  const getCardValue = (cardId: string) => {
+    const value = cardId.replace(/[^0-9JQKA]/g, '');
+    const rank = CardRankMap.get(value.toUpperCase());
+    if (rank === undefined) {
+      console.error(`랭크 변환 실패: ${cardId} → ${value}`);
+      return -1;
+    }
+    return rank;
+  };
+
+  const isValidPlay = (card: Card): boolean => {
+    if (turn === 'user') {
+      // 유저 턴: 반드시 컴퓨터가 방금 낸 카드보다 커야 함
+      if (!botSelectedCard) return true;
+      return getCardValue(card.id) > getCardValue(botSelectedCard.id);
+    } else {
+      // 컴퓨터 턴: 반드시 유저가 방금 낸 카드보다 커야 함
+      if (!userSelectedCard) return true;
+      return getCardValue(card.id) > getCardValue(userSelectedCard.id);
+    }
+  };
+
+  const endGame = (result: 'win' | 'lose' | 'draw') => {
+    navigate('/result', {
+      state: {
+        result,
+        turnHistory,
+        nickname: nickname,
+        userRemainingCards: userHands,
+        botRemainingCards: botHands,
+      },
+    });
+  };
+
+  const checkWinCondition = () => {
+    if (userHands.length === 0 && botHands.length === 0) {
+      setMessage('무승부입니다!');
+      return 'draw';
+    } else if (userHands.length === 0) {
+      setMessage(`🎉 ${nickname} 님이 이겼습니다! 축하드립니다!`);
+      return 'win';
+    } else if (botHands.length === 0) {
+      setMessage('😢 컴퓨터가 이겼습니다. 다음엔 꼭 이겨봐요!');
+      return 'lose';
+    } else {
+      return null;
+    }
+  };
+
+  const reportHistory = (card: Card | null) => {
+    if (turn === 'user') {
+      setTurnHistory(prev => {
+        const updated = prev.map(t => (t.turn === turnCount ? { ...t, user: card } : t));
+        return updated.some(t => t.turn === turnCount) ? updated : [...prev, { turn: turnCount, user: card }];
+      });
+    } else {
+      setTurnHistory(prev => {
+        const existing = prev.find(t => t.turn === turnCount);
+        if (existing) {
+          return prev.map(t => (t.turn === turnCount ? { ...t, bot: card } : t));
+        } else {
+          return [...prev, { turn: turnCount, bot: card }];
+        }
+      });
+    }
+  };
+
+  const handlePlayCards = () => {
+    console.log('사용자의 턴입니다!');
+    setMessage('');
+
+    if (!selectingCard) {
+      setMessage('카드를 선택하세요!');
+      return;
+    }
+
+    const currentCard = userHands.find(card => card.id === selectingCard);
+    if (!currentCard || !isValidPlay(currentCard)) {
+      setMessage('이 카드는 낼 수 없습니다. 더 높은 카드를 선택하세요.');
+      return;
+    }
+
+    const remainingCards = userHands.filter(card => card.id !== currentCard.id);
+    reportHistory(currentCard);
+    setUserHands(remainingCards);
+    setUserSelectedCard(currentCard);
+    console.log('낸 카드: ', currentCard);
+
+    const turnResult = checkWinCondition();
+    if (!turnResult) setTurn('bot');
+    else endGame(turnResult);
+  };
+
+  const runBotTurn = () => {
+    console.log('컴퓨터의 턴입니다!');
+    setMessage('');
+    setIsBotThinking(true);
+
+    setTimeout(() => {
+      const validCards = botHands.filter(card => isValidPlay(card));
+      if (validCards.length === 0) {
+        setMessage('컴퓨터가 낼 수 있는 카드가 없어 턴을 넘깁니다.');
+        console.log('컴퓨터가 낼 수 있는 카드가 없습니다.');
+        setBotSelectedCard(null);
+        reportHistory(null);
+        setIsBotThinking(false);
+        setTurnCount(prev => prev + 1);
+        setTurn('user');
+        return;
+      }
+
+      const currentCard = validCards[Math.floor(Math.random() * validCards.length)];
+      const remainingCards = botHands.filter(card => card.id !== currentCard.id);
+
+      reportHistory(currentCard);
+      setBotSelectedCard(currentCard);
+      setBotHands(remainingCards);
+      setIsBotThinking(false);
+      setSelectingCard('');
+      setUserSelectedCard(null);
+
+      const turnResult = checkWinCondition();
+      if (!turnResult) {
+        setTurnCount(prev => prev + 1);
+        setTurn('user');
+      } else endGame(turnResult);
+    }, 1000);
+  };
+
+  useEffect(() => {
+    const { userCards, botCards } = ShuffleCards(7, 7);
+    setUserHands(userCards);
+    setBotHands(botCards);
+  }, []);
 
   useEffect(() => {
     const storedName = localStorage.getItem('nickname');
@@ -43,165 +181,35 @@ export default function Game() {
     }
   }, [navigate, nickname]);
 
-  const hasValidMove = (): boolean => {
-    if (!playedBotCard) return true; // 첫 턴에는 낼 수 있음
-    return myCards.some(card => getCardValue(card.id) > getCardValue(playedBotCard.id));
-  };
+  useEffect(() => {
+    if (userSelectedCard) {
+      setSelectingCard('');
+      setBotSelectedCard(null);
+    } else if (botSelectedCard) {
+      setUserSelectedCard(null);
+    }
+  }, [userSelectedCard, botSelectedCard]);
 
   useEffect(() => {
     if (turn === 'user') {
-      const canPlay = hasValidMove();
-      if (!canPlay) {
-        setMessage('낼 수 있는 카드가 없습니다. 턴을 넘기세요.');
-        setCanEndTurn(true); // 턴 넘기기만 허용
-      }
-    }
-  }, [turn, myCards, playedBotCard]);
-
-  if (!nickname) return null; // 또는 <LoadingSpinner />
-
-  const resetTurnState = () => {
-    // 봇 턴 끝난 후에 상태 초기화
-    setPlayedUserCards([]);
-    setPlayedBotCard(null);
-    setCanEndTurn(false);
-  };
-
-  const toggleSelectCard = (cardId: string) => {
-    setSelectedCards(prev => (prev.includes(cardId) ? prev.filter(id => id !== cardId) : [...prev, cardId]));
-  };
-
-  const handlePlayCards = () => {
-    if (selectedCards.length === 0) {
-      setMessage('카드를 선택하세요!');
-      return;
-    }
-
-    if (selectedCards.length !== 1) {
-      setMessage('카드는 한 장만 낼 수 있습니다.');
-      return;
-    }
-
-    const selectedCardObj = myCards.find(card => card.id === selectedCards[0]);
-    if (!selectedCardObj) return;
-
-    if (!isValidPlay(selectedCardObj)) {
-      setMessage('이 카드는 낼 수 없습니다. 더 높은 카드를 선택하세요.');
-      return;
-    }
-
-    const remainingCards = myCards.filter(card => !selectedCards.includes(card.id));
-    const playedCards = myCards.filter(card => selectedCards.includes(card.id));
-    setMyCards(remainingCards);
-    setPlayedUserCards(playedCards); // UI에 표시
-    setSelectedCards([]);
-    setCanEndTurn(true);
-    // setTurnHistory(prev => [...prev, { turn: turnCount, player: 'user', card: selectedCardObj }]);
-    setTurnHistory(prev => {
-      const existing = prev.find(t => t.turn === turnCount);
-      if (existing) {
-        return prev.map(t => (t.turn === turnCount ? { ...t, user: selectedCardObj } : t));
-      } else {
-        return [...prev, { turn: turnCount, user: selectedCardObj }];
-      }
-    });
-    checkWinCondition();
-    console.log('낸 카드: ', playedCards);
-
-    // 갱신된 카드(remainingCards)를 기준으로 validMove 판단
-    const hasLargerCard = remainingCards.some(card => isValidPlay(card));
-    if (!hasLargerCard) {
-      setMessage('낼 수 있는 카드가 없어서 자동으로 턴을 넘깁니다.');
-      setTimeout(() => {
-        handleEndTurn();
-        setMessage('');
-      });
-    } else {
-      setMessage(''); // 아직 메세지가 남을 경우에 초기화
-    }
-  };
-
-  const handleEndTurn = () => {
-    setMessage('');
-
-    if (turn === 'user') {
-      setTurn('bot');
-
-      setTimeout(() => {
-        runBotTurn();
-        setTurn('user');
-        resetTurnState();
-      }, 1000);
-    }
-  };
-
-  const runBotTurn = () => {
-    console.log('컴퓨터의 턴입니다!');
-    setIsBotThinking(true);
-
-    setTimeout(() => {
-      if (botCards.length === 0) {
-        console.log('컴퓨터가 낼 카드가 없습니다.');
-        setIsBotThinking(false);
+      if (turnCount === 1) return;
+      const hasLargerCard = userHands.some(card => isValidPlay(card));
+      if (!hasLargerCard) {
+        setUserSelectedCard(null);
+        setMessage('낼 수 있는 카드가 없어서 자동으로 턴을 넘깁니다.');
+        setTimeout(() => {
+          setMessage('');
+          setTurnCount(prev => prev + 1);
+          setTurn('bot');
+        }, 800);
         return;
       }
-
-      const randomIndex = Math.floor(Math.random() * botCards.length);
-      const selectedCard = botCards[randomIndex];
-
-      console.log('컴퓨터가 낸 카드: ', selectedCard);
-      const remaining = botCards.filter((_, idx) => idx !== randomIndex);
-      setBotCards(remaining);
-      setPlayedBotCard(selectedCard); // UI에 표시
-      // setTurnHistory(prev => [...prev, { turn: turnCount, player: 'bot', card: selectedCard }]);
-      setTurnHistory(prev => {
-        const existing = prev.find(t => t.turn === turnCount);
-        if (existing) {
-          return prev.map(t => (t.turn === turnCount ? { ...t, bot: selectedCard } : t));
-        } else {
-          return [...prev, { turn: turnCount, bot: selectedCard }];
-        }
-      });
-      setTurnCount(prev => prev + 1);
-
-      setIsBotThinking(false);
-      checkWinCondition();
-    }, 1000);
-  };
-
-  const endGame = (result: 'win' | 'lose' | 'draw') => {
-    //navigate('/result', { state: { result } });
-    navigate('/result', {
-      state: { result: result, turnHistory },
-    });
-  };
-
-  const checkWinCondition = () => {
-    if (myCards.length === 0 && botCards.length === 0) {
-      setMessage('무승부입니다!');
-      endGame('draw');
-    } else if (myCards.length === 0) {
-      setMessage(`🎉 ${nickname} 님이 이겼습니다! 축하드립니다!`);
-      endGame('win');
-    } else if (botCards.length === 0) {
-      setMessage('😢 컴퓨터가 이겼습니다. 다음엔 꼭 이겨봐요!');
-      endGame('lose');
+    } else {
+      runBotTurn();
     }
-  };
+  }, [turn]);
 
-  const getCardValue = (cardId: string) => {
-    const value = cardId.slice(0, -1); // '7♣' → '7'
-    return CardRankMap.get(value) ?? -1; // 더 빠르고 안정적이며, 존재하지 않는 값(-1)도 안전하게 처리
-  };
-
-  const isValidPlay = (card: Card): boolean => {
-    // 검증 함수
-    if (!playedBotCard && playedUserCards.length === 0) return true; // 첫 턴
-    const lastPlayed = playedBotCard?.id || playedUserCards[playedUserCards.length - 1]?.id;
-
-    if (!lastPlayed) return true;
-    return getCardValue(card.id) > getCardValue(lastPlayed);
-  };
+  if (!nickname) return null; // 또는 <LoadingSpinner />
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-green-100 p-8">
@@ -218,40 +226,38 @@ export default function Game() {
       {showRules && <RulePanel />}
       {isBotThinking && <p className="mt-4 text-gray-600">컴퓨터가 카드를 고르는 중...</p>}
       <MyCards
-        cards={myCards}
-        selected={selectedCards}
+        cards={userHands}
+        selected={selectingCard}
         onToggle={toggleSelectCard}
       />
-      <SelectionArea selected={selectedCards} />
+      <SelectionArea selected={selectingCard} />
       <ActionButtons
-        disablePlay={turn !== 'user'}
-        disableEndTurn={turn !== 'user' || !canEndTurn}
-        onEndTurn={handleEndTurn}
+        disablePlay={turn !== 'user' || isBotThinking}
         onPlay={handlePlayCards}
+        /* disableEndTurn={turn !== 'user' || !canEndTurn}
+          onEndTurn={handleEndTurn} */
       />
 
       {message && <div className="mb-4 rounded bg-red-100 px-4 py-2 text-sm text-red-700 shadow">{message}</div>}
 
-      {playedUserCards.length > 0 && (
+      {userSelectedCard && (
         <div className="mt-4">
           <h3 className="font-semibold">당신이 낸 카드</h3>
           <div className="flex gap-2">
-            {playedUserCards.map(card => (
-              <div
-                key={card.id}
-                className="rounded border bg-white px-2 py-1 shadow">
-                {card.label}
-              </div>
-            ))}
+            <div
+              key={userSelectedCard.id}
+              className="rounded border bg-white px-2 py-1 shadow">
+              {userSelectedCard.label}
+            </div>
           </div>
         </div>
       )}
 
-      {playedBotCard && (
+      {botSelectedCard && (
         <div className="mt-4">
           <h3 className="font-semibold">컴퓨터가 낸 카드</h3>
           <div className="flex gap-2">
-            <div className="rounded border bg-white px-2 py-1 shadow">{playedBotCard.label}</div>
+            <div className="rounded border bg-white px-2 py-1 shadow">{botSelectedCard.label}</div>
           </div>
         </div>
       )}

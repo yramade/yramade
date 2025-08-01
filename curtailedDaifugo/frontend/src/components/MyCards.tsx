@@ -5,17 +5,17 @@ interface Card {
 
 interface Props {
   cards: Card[];
-  selected: string[];
+  selected: string;
   onToggle: (id: string) => void;
 }
 
 export default function MyCards({ cards, selected, onToggle }: Props) {
   return (
-    <div className="mb-4 w-full max-w-2xl rounded bg-white p-4 shadow">
+    <div className="mb-4 w-full max-w-5xl rounded bg-white p-4 shadow">
       <p className="text-center font-semibold text-gray-700">내 카드</p>
       <div className="mt-2 flex flex-wrap justify-center gap-2">
         {cards.map(card => {
-          const isSelected = selected.includes(card.id);
+          const isSelected = selected === card.id;
           return (
             <div
               key={card.id}

@@ -15,13 +15,13 @@ export default function TurnHistory({ groupedHistory }: TurnRecordProps) {
     <div className="mt-6 w-full max-w-md">
       <h3 className="mb-2 text-lg font-semibold">턴 기록</h3>
       <ul className="space-y-3 text-sm">
-        {groupedHistory.map(turn => (
+        {groupedHistory.map(({ turn, user, bot }) => (
           <li
-            key={turn.turn}
+            key={turn}
             className="rounded bg-white p-3 shadow-sm">
-            <p className="font-bold">[{turn.turn}턴]</p>
-            <p>당신: {turn.user?.label ?? '없음'}</p>
-            <p>컴퓨터: {turn.bot?.label ?? '대기 중...'}</p>
+            <p className="font-bold">[{turn}턴]</p>
+            <p>당신: {user?.label ?? '없음'}</p>
+            <p>컴퓨터: {bot?.label ?? '없음'}</p>
           </li>
         ))}
       </ul>
