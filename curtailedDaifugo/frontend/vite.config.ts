@@ -12,4 +12,8 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./vitest-setup.ts'],
   },
+  server: {
+    host: '0.0.0.0', // 또는 true
+    port: 3000,
+  },
 });
