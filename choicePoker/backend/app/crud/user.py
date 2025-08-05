@@ -11,7 +11,7 @@ def create_user(db: Session, name: str) -> User:
     db.refresh(new_user)
     return new_user
 
-# 사용자 이름 수정
+# 사용자 정보 수정
 def update_user_name(db: Session, user_id: int, new_name: str) -> Optional[User]:
     user = db.query(User).filter(User.id == user_id, User.deleted_at.is_(None)).first()
     if user:
