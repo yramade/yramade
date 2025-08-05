@@ -4,7 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 class Game(Base):
-    __tablename__ = "Game"
+    __tablename__ = "game"
 
     id = Column(Integer, primary_key=True, index=True)
     user_name = Column(String(50), unique=True, nullable=False)
@@ -22,10 +22,10 @@ class Game(Base):
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
 
 
-class StartGame(BaseModel):
-    id: int
-    name: str
-    created_at: datetime
+# class StartGame(BaseModel):
+#     id: int
+#     name: str
+#     created_at: datetime
 
 # from pydantic import BaseModel
 # from datetime import datetime
