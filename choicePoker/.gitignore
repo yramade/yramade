@@ -1,0 +1,136 @@
+# 바이트 컴파일된/최적화된/DLL 파일
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C 확장
+*.so
+
+# 배포/패키징
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+# 일반적으로 이 파일들은 PyInstaller가 실행 파일을 빌드하기 전에 템플릿으로부터 파이썬 스크립트에 의해 작성되며, 날짜/기타 정보들을 주입합니다.
+*.manifest
+*.spec
+
+# 설치 프로그램 로그
+pip-log.txt
+pip-delete-this-directory.txt
+
+# 단위 테스트/커버리지 보고서
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# 번역
+*.mo
+*.pot
+
+# Django 관련:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask 관련:
+instance/
+.webassets-cache
+
+# Scrapy 관련:
+.scrapy
+
+# Sphinx 문서
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+# pypa/pipenv#598에 따르면, Pipfile.lock은 버전 관리(Git)에 포함하는 것이 권장됩니다. 그러나 공동 작업 시, 플랫폼별 의존성 또는 크로스 플랫폼을 지원하지 않는 의존성이 있을 경우, pipenv가 작동하지 않는 의존성을 설치하거나 필요한 모든 의존성을 설치하지 못할 수 있습니다.
+#Pipfile.lock
+
+# PEP 582; 예: github.com/David-OConnor/pyflow 에서 사용됨
+__pypackages__/
+
+# Celery 관련
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath 파싱된 파일
+*.sage.py
+
+# 가상 환경
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder 프로젝트 설정
+.spyderproject
+.spyproject
+
+# Rope 프로젝트 설정
+.ropeproject
+
+# mkdocs 문서
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre 타입 검사기
+.pyre/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
