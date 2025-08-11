@@ -1,5 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, func
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
+from typing import List, Optional
+import datetime
 
 Base = declarative_base()
 
@@ -14,12 +16,38 @@ class Game(Base):
     ai_final_cards = Column(String)
     player_hand_rank = Column(String(50))
     ai_hand_rank = Column(String(50))
-    choice = Column(String(10), choices=[('strong', 'Strong'), ('weak', 'Weak')])
-    choice_by: Column(String(10), choices=[('player', 'Player'), ('ai', 'Computer')])
-    winner: Column(String(10), choices=[('player', 'Player'), ('ai', 'Computer'), ('draw', 'Draw')])
+    choice = Column(String(10), choices=[('strong', 'Strong'), ('weak', 'Weak')]) # type: ignore
+    choice_by = Column(String(10), choices=[('player', 'Player'), ('ai', 'Computer')])
+    winner = Column(String(10), choices=[('player', 'Player'), ('ai', 'Computer'), ('draw', 'Draw')])
     player_dice = Column(Integer)
     ai_dice = Column(Integer)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
+
+class Game(Base):
+    id: int
+    user_name: str
+    player_cards: str
+    ai_cards: str
+    player_final_cards: Optional[str] = None
+    ai_final_cards: Optional[str] = None
+    player_hand_rank: Optional[str] = None
+    ai_hand_rank: Optional[str] = None
+    choice: Optional[str] = None
+    choice_by: Optional[str] = None
+    winner: Optional[str] = None
+    player_dice: Optional[int] = None
+    ai_dice: Optional[int] = None
+    created_at: datetime
+    
+
+class GameResponse(Base):
+    id: int
+    user_name: str
+    player_cards: List[str]
+    ai_cards: List[str]
+
+    class Config:
+        orm_mode = True
 
 
 # class StartGame(BaseModel):

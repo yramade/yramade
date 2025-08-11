@@ -2,29 +2,25 @@ from sqlalchemy.orm import Session
 from app.models.game import Game
 from datetime import datetime
 from typing import Optional
-
-Class GameInfo:
-  id: int
-  user_name: str
-  player_cards: str
-  ai_cards: str
-  player_final_cards: Optional[str] = None
-  ai_final_cards: Optional[str] = None
-  player_hand_rank: Optional[str] = None
-  ai_hand_rank: Optional[str] = None
-  choice: Optional[str] = None
-  choice_by: Optional[str] = None
-  winner: Optional[str] = None
-  player_dice: Optional[int] = None
-  ai_dice: Optional[int] = None
-  created_at: datetime
+from utils.cards import generate_deck, generate_hand
+from schemas.game import Game
 
 # 게임 시작
-def start_game(db: Session, game: GameInfo) -> Game:
+def start_game(db: Session, data: Game) -> Game:
+  deck = generate_deck()
+  user_card = generate_hand(deck, 5)
+
+  # 중복 카드 제거
+  for card in user_card:
+    deck.remove(card)
+
+  ai_card = generate_hand(deck, 5)
+  
   new_game = Game(
-    user_name=game.user_name,
-    player_cards=game.player_cards,
-    ai_cards=game.ai_cards
+    user_name=data.user_name,
+    player_cards=data.player_cards,
+    ai_cards=ai_card,
+    exchange_cards=0
   )
   db.add(new_game)
   db.commit()
@@ -32,7 +28,7 @@ def start_game(db: Session, game: GameInfo) -> Game:
   return new_game
 
 # 게임 정보 수정
-def update_game(db: Session, data: GameInfo) -> Optional[Game]:
+def update_game(db: Session, data: Game) -> Optional[Game]:
   game = db.query(Game).filter(Game.id == data.id).first()
   if game:
     game.user_name=data.user_name,
