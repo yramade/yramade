@@ -9,7 +9,7 @@
   "jsxSingleQuote": false,
   "jsxSingleAttributePerLine": false,
   "plugins": ["prettier-plugin-tailwindcss"],
-  "printWidth": 120,
+  "printWidth": 150,
   "proseWrap": "always",
   "quoteProps": "as-needed",
   "semi": true,

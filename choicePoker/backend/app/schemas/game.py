@@ -1,17 +1,22 @@
 from sqlalchemy import Column, Integer, String, DateTime, func
 from sqlalchemy.orm import declarative_base
 from typing import List, Optional
+from pydantic import BaseModel
 import datetime
 
 Base = declarative_base()
 
+
+# ============================
+# SQLAlchemy 모델 (DB 테이블 정의)
+# ============================
 class Game(Base):
     __tablename__ = "game"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_name = Column(String(50), unique=True, nullable=False)
-    player_cards = Column(String, nullable=False)
-    ai_cards = Column(String, nullable=False)
+    user_id = Column(Integer, unique=True, null=True, blank=True)
+    player_cards = Column(String, null=False)
+    ai_cards = Column(String, null=False)
     player_final_cards = Column(String)
     ai_final_cards = Column(String)
     player_hand_rank = Column(String(50))
@@ -21,11 +26,15 @@ class Game(Base):
     winner = Column(String(10), choices=[('player', 'Player'), ('ai', 'Computer'), ('draw', 'Draw')])
     player_dice = Column(Integer)
     ai_dice = Column(Integer)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    created_at = Column(DateTime, server_default=func.now(), null=False)
 
-class Game(Base):
+
+# ============================
+# Pydantic 스키마 (요청/응답 정의)
+# ============================
+class GameBase(BaseModel):
     id: int
-    user_name: str
+    user_id: int
     player_cards: str
     ai_cards: str
     player_final_cards: Optional[str] = None
@@ -38,11 +47,16 @@ class Game(Base):
     player_dice: Optional[int] = None
     ai_dice: Optional[int] = None
     created_at: datetime
-    
 
-class GameResponse(Base):
+    class Config:
+        orm_mode = True
+    
+class GameCreate(BaseModel):
+    user_id: int
+
+class GameResponse(BaseModel):
     id: int
-    user_name: str
+    user_id: int
     player_cards: List[str]
     ai_cards: List[str]
 

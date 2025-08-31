@@ -3,19 +3,19 @@ from django.db import models
 # from django.contrib.auth.models import User
 
 class User(models.Model):
-    id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=50, unique=True)
+    user_id = models.AutoField(primary_key=True)
+    user_name = models.CharField(max_length=50, unique=True, default='플레이어')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True)
-    deleted_at = models.DateTimeField(nullable=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         managed = True
         db_table = 'user'
 
 class Game(models.Model):
-    id = models.AutoField(primary_key=True)
-    user_name = models.ForeignKey(User, models.PROTECT, db_column='name')
+    game_id = models.AutoField(primary_key=True)
+    user_id = models.ForeignKey(User, models.PROTECT, db_column='user_id',  null=True, blank=True)
     player_cards = models.TextField()
     ai_cards = models.TextField()
     player_final_cards = models.TextField()
@@ -34,8 +34,8 @@ class Game(models.Model):
         db_table  = 'game'
 
 class Log(models.Model):
-    id = models.AutoField(primary_key=True)
-    game_id = models.ForeignKey(Game, models.PROTECT, db_column='id')
+    log_id = models.AutoField(primary_key=True)
+    game_id = models.ForeignKey(Game, models.PROTECT, db_column='game_id')
     event_type = models.CharField(max_length=10, choices=[
         ('deal', 'Deal'),
         ('exchange', 'Exchange'),

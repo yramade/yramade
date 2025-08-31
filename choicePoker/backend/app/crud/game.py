@@ -1,12 +1,12 @@
 from sqlalchemy.orm import Session
-from app.models.game import Game
+from app.models import Game
 from datetime import datetime
 from typing import Optional
 from utils.cards import generate_deck, generate_hand
 from schemas.game import Game
 
 # 게임 시작
-def start_game(db: Session, data: Game) -> Game:
+def create_game(db: Session, data: Game) -> Game:
   deck = generate_deck()
   user_card = generate_hand(deck, 5)
 
