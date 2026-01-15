@@ -1,0 +1,43 @@
+#include <stdio.h>
+#include <malloc.h>
+
+char *AddString(char *, char *);
+
+void main()
+{
+  char data_1[80] = "I am inchoon";
+  char data_2[80] = "Who are you?";
+  char *ret; // AddString() 함수의 결과를 저장할 포인터 ret의 선언
+
+  printf("AddString() 함수를 호출하기 전\n");
+  printf("data_1의 문자열 : %s\n", data_1);
+  printf("data_2의 문자열 : %s\n", data_2);
+
+  ret = AddString(data_1, data_2);
+  printf("\nAddString() 함수를 호출한 후\n");
+  printf("data_1의 문자열 : %s\n", data_1);
+  printf("data_2의 문자열 : %s\n", data_2);
+  printf("ret의 문자열 : %s\n", ret);
+
+  return;
+}
+
+char *AddString(char *src1, char *src2)
+{
+  char *ret, *ptr;
+  ptr = (char *)malloc(sizeof(src1) + sizeof(src2));
+  // 포인터 변수 src1의 크기와 src2의 크기만큼의 메모리를 할당받아 포인터 ptr에 연결
+  ret = ptr; // 포인터 ptr의 값을 포인터 ret에 복사
+
+  while (*src1)
+    *ptr++ = *src1++;
+    // src1의 처음부터 끝까지 데이터를 ptr이 가리키는 곳에 복사
+
+  while (*src2)
+    *ptr++ = *src2++;
+    // src2의 처음부터 끝까지 데이터를 ptr이 가리키는 곳에 복사
+
+  *ptr = '\0'; // 문자열의 끝을 알리는 널문자 삽입
+  return ret; // 포인터 ret의 값을 반환
+  
+}

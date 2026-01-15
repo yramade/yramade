@@ -1,0 +1,41 @@
+1: #include <stdio.h>
+2: 
+3: int main(int argc, char *argv[])
+4: {
+5:   FILE *fin, *fout;
+6:   char buf[80];
+7:   int LineNumber = 1;
+8: 
+9:   if(argc < 3) {
+10:     printf("다음 형식으로 입력하세요! : exam14_4 원본_파일 복�11: �_파일\n");
+12:     return -1;
+13:   }
+14: 
+15:   if((fin = fopen(argv[1], "r")) == NULL) {
+16:     printf("원본 파일을 열 수 없습니다.\n");
+17:     return -1;
+18:   }
+19: 
+20:   if((fout = fopen(argv[2], "w")) == NULL) {
+21:     printf("복사할 파일을 생성할 수 없습니다.\n");
+22:     fclose(fin);
+23:     return -1;
+24:   }
+25: 
+26:   while (fgets(buf, 80, fin) != NULL)
+27:   {
+28:     fprintf(fout, "%d: ", LineNumber++);  // 직접 출력
+29:     fputs(buf, fout);
+30:   }
+31: 
+32:   fclose(fin);
+33:   fclose(fout);
+34:   return 0;
+35: }
+36: 
+37: /* 
+38: c 폴더 내에서 실행
+39: gcc exam14_4.c -o exam14_4
+40: echo "Hello World!" > test2.txt
+41: ./exam14_4 exam14_4.c backup.txt
+42: */

@@ -1,0 +1,11 @@
+- module(shop1).
+- export([total/1]).
+
+total([{What, N}|T]) -> cost(What) * N + total(T);
+total([]) -> 0.
+
+cost(oranges) -> 5;
+cost(newpaper) -> 8;
+cost(apples) -> 2;
+cost(pears) -> 9;
+cost(milk) -> 7.
