@@ -2,8 +2,10 @@
 pokemon
 ruby
 .pem
+*.beam
 aws
-practice
+Debug/
+practice/erlang/otp/
 
 # Node.js
 node_modules/
